@@ -92,8 +92,10 @@ if os.name == 'nt':
             return keys.get(ch2, ch2.decode('utf-8', errors='ignore'))
         ctrl_map = {
             b'\x03': 'CTRL_C', b'\x16': 'CTRL_V', b'\x06': 'CTRL_F',
-            b'\x12': 'CTRL_R', b'\x13': 'CTRL_S', b'\x11': 'CTRL_Q',
-            b'\r': 'ENTER', b'\x08': 'BACKSPACE'
+            b'\x12': 'CTRL_R', b'\x13': 'CTRL_S', 
+            b'\x0E': 'CTRL_N',   # Ctrl+N = Fail Baru ✅
+            b'\x15': 'CTRL_U',   # Ctrl+U = Ubah Nama ✅
+            b'\x11': 'CTRL_Q', b'\r': 'ENTER', b'\x08': 'BACKSPACE'
         }
         return ctrl_map.get(ch, ch.decode('utf-8', errors='ignore'))
 else:
@@ -159,7 +161,7 @@ class TerminalEditor:
                     else:
                         print(f"  {paparan}")
         print(f"{Colors.YELLOW}{'-'*60}{Colors.RESET}")
-        print(f"{Colors.BOLD}↑↓ Pilih | Enter Buka | ← Kembali | Ctrl+Q Keluar{Colors.RESET}")
+        print(f"{Colors.BOLD}↑↓ Pilih | Enter Buka | Ctrl+U Ubah Nama | Ctrl+N Fail Baru | Ctrl+Q Keluar{Colors.RESET}")
 
     def draw_editor(self):
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -209,13 +211,51 @@ class TerminalEditor:
 
     def save_file(self):
         if not self.filename:
-            return
+            print(f"\n{Colors.YELLOW}Nama fail: {Colors.RESET}", end='', flush=True)
+            nama = sys.stdin.readline().strip()
+            if not nama:
+                return
+            self.filename = os.path.join(self.cwd, nama)
         try:
             with open(self.filename, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(self.lines))
             self.dirty = False
+            self.file_type = SyntaxHighlighter.get_file_type(self.filename)
         except Exception as e:
             print(f"{Colors.RED}Ralat simpan: {e}{Colors.RESET}")
+
+    def new_file(self):
+        """Buat fail baru kosong & masuk mod editor"""
+        self.lines = ['']
+        self.filename = None
+        self.file_type = 'text'
+        self.cursor_y = 0
+        self.cursor_x = 0
+        self.dirty = False
+        self.mode = 'editor'
+
+    def rename_entry(self):
+        """Ubah nama fail/folder yang dipilih"""
+        entries = self.get_dir_list()
+        if not entries:
+            return
+        nama_lama, is_dir = entries[self.selected]
+        laluan_lama = os.path.join(self.cwd, nama_lama)
+
+        print(f"\n{Colors.YELLOW}Ubah nama: {nama_lama}{Colors.RESET}")
+        print(f"Nama baru: ", end='', flush=True)
+        nama_baru = sys.stdin.readline().strip()
+
+        if not nama_baru or nama_baru == nama_lama:
+            return
+
+        laluan_baru = os.path.join(self.cwd, nama_baru)
+        try:
+            os.rename(laluan_lama, laluan_baru)
+            print(f"{Colors.GREEN}Berhasil!{Colors.RESET}")
+        except Exception as e:
+            print(f"{Colors.RED}Gagal: {e}{Colors.RESET}")
+        input("Tekan Enter...")
 
     def insert_char(self, ch):
         line = self.lines[self.cursor_y]
@@ -331,6 +371,10 @@ class TerminalEditor:
                 self.scroll_offset = 0
             else:
                 self.open_file(laluan)
+        elif key == 'CTRL_N':
+            self.new_file()
+        elif key == 'CTRL_U':  # Guna Ctrl+U ganti F2
+            self.rename_entry()
         elif key == 'LEFT' or key == 'BACKSPACE':
             induk = os.path.dirname(self.cwd)
             if induk != self.cwd:
