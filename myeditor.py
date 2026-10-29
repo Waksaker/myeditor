@@ -3,6 +3,7 @@ import os
 import sys
 import subprocess
 import re  # ← tambah ini
+import shutil
 
 class SyntaxHighlighter:
     PY_PATTERNS = [
@@ -88,14 +89,22 @@ if os.name == 'nt':
                 b'\r': 'ENTER', b'\x03': 'CTRL_C', b'\x16': 'CTRL_V',
                 b'\x06': 'CTRL_F', b'\x12': 'CTRL_R', b'\x13': 'CTRL_S',
                 b'\x11': 'CTRL_Q', b'\x08': 'BACKSPACE', b'\x7f': 'DELETE'
+                # F3: b'\x74': 'F3'  ← tambah kalau nak guna F3
             }
             return keys.get(ch2, ch2.decode('utf-8', errors='ignore'))
+        
         ctrl_map = {
-            b'\x03': 'CTRL_C', b'\x16': 'CTRL_V', b'\x06': 'CTRL_F',
-            b'\x12': 'CTRL_R', b'\x13': 'CTRL_S', 
+            b'\x03': 'CTRL_C',   # Ctrl+C
+            b'\x16': 'CTRL_V',   # Ctrl+V
+            b'\x06': 'CTRL_F',   # Ctrl+F
+            b'\x12': 'CTRL_R',   # Ctrl+R
+            b'\x13': 'CTRL_S',   # Ctrl+S
             b'\x0E': 'CTRL_N',   # Ctrl+N = Fail Baru ✅
             b'\x15': 'CTRL_U',   # Ctrl+U = Ubah Nama ✅
-            b'\x11': 'CTRL_Q', b'\r': 'ENTER', b'\x08': 'BACKSPACE'
+            b'\x04': 'CTRL_D',   # Ctrl+D = Padam ✅
+            b'\x11': 'CTRL_Q',   # Ctrl+Q = Keluar
+            b'\r': 'ENTER',
+            b'\x08': 'BACKSPACE'
         }
         return ctrl_map.get(ch, ch.decode('utf-8', errors='ignore'))
 else:
@@ -136,7 +145,7 @@ class TerminalEditor:
     def draw_browser(self):
         os.system('cls' if os.name == 'nt' else 'clear')
         print(f"{Colors.BOLD}{Colors.BLUE}📂 {self.cwd}{Colors.RESET}")
-        print(f"{Colors.YELLOW}{'-'*60}{Colors.RESET}")
+        print(f"{Colors.RED}{'-'*60}{Colors.RESET}")
         entries = self.get_dir_list()
         try:
             h = os.get_terminal_size().lines - 5
@@ -160,8 +169,8 @@ class TerminalEditor:
                         print(f"{Colors.GREEN}  {paparan}{Colors.RESET}")
                     else:
                         print(f"  {paparan}")
-        print(f"{Colors.YELLOW}{'-'*60}{Colors.RESET}")
-        print(f"{Colors.BOLD}↑↓ Pilih | Enter Buka | Ctrl+U Ubah Nama | Ctrl+N Fail Baru | Ctrl+Q Keluar{Colors.RESET}")
+        print(f"{Colors.RED}{'-'*60}{Colors.RESET}")
+        print(f"{Colors.BOLD}↑↓ Pilih | Enter Buka | Ctrl+U Ubah Nama | Ctrl+D Padam | Ctrl+N Fail Baru | Ctrl+Q Keluar{Colors.RESET}")
 
     def draw_editor(self):
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -211,7 +220,7 @@ class TerminalEditor:
 
     def save_file(self):
         if not self.filename:
-            print(f"\n{Colors.YELLOW}Nama fail: {Colors.RESET}", end='', flush=True)
+            print(f"\n{Colors.RED}Nama fail: {Colors.RESET}", end='', flush=True)
             nama = sys.stdin.readline().strip()
             if not nama:
                 return
@@ -242,7 +251,7 @@ class TerminalEditor:
         nama_lama, is_dir = entries[self.selected]
         laluan_lama = os.path.join(self.cwd, nama_lama)
 
-        print(f"\n{Colors.YELLOW}Ubah nama: {nama_lama}{Colors.RESET}")
+        print(f"\n{Colors.RED}Ubah nama: {nama_lama}{Colors.RESET}")
         print(f"Nama baru: ", end='', flush=True)
         nama_baru = sys.stdin.readline().strip()
 
@@ -255,6 +264,39 @@ class TerminalEditor:
             print(f"{Colors.GREEN}Berhasil!{Colors.RESET}")
         except Exception as e:
             print(f"{Colors.RED}Gagal: {e}{Colors.RESET}")
+        input("Tekan Enter...")
+
+    def delete_entry(self):
+        """Padam fail atau folder yang dipilih"""
+        entries = self.get_dir_list()
+        if not entries:
+            return
+        
+        nama_lama, is_dir = entries[self.selected]
+        laluan = os.path.join(self.cwd, nama_lama)
+        
+        # Minta pengesahan sebelum padam
+        jenis = "folder" if is_dir else "fail"
+        print(f"\n{Colors.RED}Pasti nak padam {jenis}: {nama_lama}? (Y/N){Colors.RESET}")
+        sah = sys.stdin.readline().strip().upper()
+        
+        if sah != 'Y':
+            print(f"{Colors.RED}Dibatalkan.{Colors.RESET}")
+            input("Tekan Enter...")
+            return
+        
+        try:
+            if is_dir:
+                shutil.rmtree(laluan)  # Boleh padam folder tak kosong
+            else:
+                os.remove(laluan)
+            print(f"{Colors.GREEN}Berhasil dipadam!{Colors.RESET}")
+        except Exception as e:
+            if is_dir:
+                print(f"{Colors.RED}Gagal: Folder mungkin tidak kosong{Colors.RESET}")
+            else:
+                print(f"{Colors.RED}Gagal: {e}{Colors.RESET}")
+        
         input("Tekan Enter...")
 
     def insert_char(self, ch):
@@ -375,6 +417,8 @@ class TerminalEditor:
             self.new_file()
         elif key == 'CTRL_U':  # Guna Ctrl+U ganti F2
             self.rename_entry()
+        elif key == 'CTRL_D':   # Padam — guna Ctrl+D
+            self.delete_entry()
         elif key == 'LEFT' or key == 'BACKSPACE':
             induk = os.path.dirname(self.cwd)
             if induk != self.cwd:
@@ -414,6 +458,7 @@ class TerminalEditor:
                 elif ch in '\r\n':
                     key = 'ENTER'
                 elif ch == '\x03': key = 'CTRL_C'
+                elif ch == '\x04': key = 'CTRL_D'
                 elif ch == '\x16': key = 'CTRL_V'
                 elif ch == '\x06': key = 'CTRL_F'
                 elif ch == '\x12': key = 'CTRL_R'
