@@ -144,11 +144,45 @@ class TerminalEditor:
 
     def draw_browser(self):
         os.system('cls' if os.name == 'nt' else 'clear')
+        
+        # Senarai kawalan
+        kawalan_list = [
+            "1) ↑↓ Pilih",
+            "2) Enter Buka",
+            "3) Ctrl+U Nama",
+            "4) Ctrl+D Padam",
+            "5) Ctrl+N Baru",
+            "6) Ctrl+Q Keluar"
+        ]
+        
+        try:
+            lebar = os.get_terminal_size().columns
+        except:
+            lebar = 80
+        
+        # Baris laluan di kiri
         print(f"{Colors.BOLD}{Colors.BLUE}📂 {self.cwd}{Colors.RESET}")
-        print(f"{Colors.RED}{'-'*60}{Colors.RESET}")
+        print(f"{Colors.RED}{'─' * lebar}{Colors.RESET}")
+        
+        # Senarai kawalan dalam KOTAK di kanan
+        lebar_kawalan = max(len(item) for item in kawalan_list) + 2
+        # ruang = max(0, lebar - lebar_kawalan - 4) # Kanan
+        ruang = max(0, (lebar - lebar_kawalan) // 2) # Tengah
+        
+        # Garis atas kotak
+        print(f"{' ' * ruang}┌{'─' * lebar_kawalan}┐")
+        # Isi kotak
+        for item in kawalan_list:
+            ruang_kosong = lebar_kawalan - len(item) - 1
+            print(f"{' ' * ruang}│ \033[38;5;0m{item}{' ' * ruang_kosong}\033[0m│")
+        # Garis bawah kotak
+        print(f"{' ' * ruang}└{'─' * lebar_kawalan}┘")
+        
+        print(f"{Colors.RED}{'─' * lebar}{Colors.RESET}")
+        
         entries = self.get_dir_list()
         try:
-            h = os.get_terminal_size().lines - 5
+            h = os.get_terminal_size().lines - 12
         except:
             h = 15
         if self.selected >= self.scroll_offset + h:
@@ -163,31 +197,58 @@ class TerminalEditor:
                 nama, is_dir = entries[i]
                 paparan = ('[DIR]  ' + nama) if is_dir else ('       ' + nama)
                 if i == self.selected:
-                    print(f"{Colors.GRAY}▶ {paparan}{Colors.RESET}")
+                    # ✅ Latar PUTIH + teks HITAM
+                    print(f"\033[48;5;15;38;5;0m▶ {paparan}\033[0m")
                 else:
                     if is_dir:
                         print(f"{Colors.GREEN}  {paparan}{Colors.RESET}")
                     else:
                         print(f"  {paparan}")
-        print(f"{Colors.RED}{'-'*60}{Colors.RESET}")
-        print(f"{Colors.BOLD}↑↓ Pilih | Enter Buka | Ctrl+U Ubah Nama | Ctrl+D Padam | Ctrl+N Fail Baru | Ctrl+Q Keluar{Colors.RESET}")
+        print(f"{Colors.RED}{'─' * lebar}{Colors.RESET}")
 
     def draw_editor(self):
         os.system('cls' if os.name == 'nt' else 'clear')
         name = self.filename or '(fail baru)'
         tanda = f"{Colors.RED} * BELUM SIMPAN{Colors.RESET}" if self.dirty else ''
-        print(f"{Colors.BOLD}{Colors.BLUE}📝 {name}{tanda}{Colors.RESET}")
-        print(f"{Colors.RED}{'-'*60}{Colors.RESET}")
+        
+        kawalan_list = [
+            "1) Ctrl+C Salin",
+            "2) Ctrl+V Tampal",
+            "3) Ctrl+F Cari",
+            "4) Ctrl+R Ganti",
+            "5) Ctrl+S Simpan",
+            "6) Ctrl+Q Kembali"
+        ]
+        
         try:
-            h = os.get_terminal_size().lines - 6
+            lebar = os.get_terminal_size().columns
+        except:
+            lebar = 80
+        
+        print(f"{Colors.BOLD}{Colors.BLUE}📝 {name}{tanda}{Colors.RESET}")
+        print(f"{Colors.RED}{'─' * lebar}{Colors.RESET}")
+        
+        # Senarai kawalan dalam KOTAK di kanan
+        lebar_kawalan = max(len(item) for item in kawalan_list) + 2
+        # ruang = max(0, lebar - lebar_kawalan - 4) # Kanan
+        ruang = max(0, (lebar - lebar_kawalan) // 2) # Tengah
+        
+        print(f"{' ' * ruang}┌{'─' * lebar_kawalan}┐")
+        for item in kawalan_list:
+            ruang_kosong = lebar_kawalan - len(item) - 1
+            print(f"{' ' * ruang}│ \033[38;5;0m{item}{' ' * ruang_kosong}\033[0m│")
+        print(f"{' ' * ruang}└{'─' * lebar_kawalan}┘")
+        
+        print(f"{Colors.RED}{'─' * lebar}{Colors.RESET}")
+        
+        try:
+            h = os.get_terminal_size().lines - 14
         except:
             h = 15
         top = max(0, self.cursor_y - h + 1)
         for y in range(top, min(len(self.lines), top + h)):
             nombor = f"{y+1:3d}"
             baris = self.lines[y]
-            
-            # === Tambah Warna Sintaks ===
             baris_berwarna = SyntaxHighlighter.highlight_line(baris, self.file_type)
             
             if y == self.cursor_y:
@@ -198,11 +259,11 @@ class TerminalEditor:
                     teks_baris = f"{bahagian_kiri}\033[91;7m{huruf_kursor}\033[0m{bahagian_kanan}"
                 else:
                     teks_baris = baris + "\033[91;7m \033[0m"
-                print(f"{Colors.GRAY}▶ {nombor} │ {teks_baris}{Colors.RESET}")
+                # ✅ Latar PUTIH + teks HITAM
+                print(f"\033[48;5;15;38;5;0m▶ {nombor} │ {teks_baris}\033[0m")
             else:
-                print(f"  {nombor} │ {baris_berwarna}{Colors.RESET}")
-        print(f"{Colors.RED}{'-'*60}{Colors.RESET}")
-        print(f"Ctrl+C Salin | Ctrl+V Tampal | Ctrl+F Cari | Ctrl+R Ganti | Ctrl+S Simpan | Ctrl+Q Kembali")
+                print(f"  {nombor} │ {baris_berwarna}")
+        print(f"{Colors.RED}{'─' * lebar}{Colors.RESET}")
 
     def open_file(self, path):
         try:
