@@ -147,12 +147,12 @@ class TerminalEditor:
         
         # Senarai kawalan
         kawalan_list = [
-            "1) ↑↓ Pilih",
-            "2) Enter Buka",
-            "3) Ctrl+U Nama",
-            "4) Ctrl+D Padam",
-            "5) Ctrl+N Baru",
-            "6) Ctrl+Q Keluar"
+            "1) ↑↓ => Pilih",
+            "2) Enter => Buka",
+            "3) Ctrl+U => Nama",
+            "4) Ctrl+D => Padam",
+            "5) Ctrl+N => Fail Baru",
+            "6) Ctrl+Q => Keluar"
         ]
         
         try:
@@ -212,12 +212,12 @@ class TerminalEditor:
         tanda = f"{Colors.RED} * BELUM SIMPAN{Colors.RESET}" if self.dirty else ''
         
         kawalan_list = [
-            "1) Ctrl+C Salin",
-            "2) Ctrl+V Tampal",
-            "3) Ctrl+F Cari",
-            "4) Ctrl+R Ganti",
-            "5) Ctrl+S Simpan",
-            "6) Ctrl+Q Kembali"
+            "1) Ctrl+C => Salin",
+            "2) Ctrl+V => Tampal",
+            "3) Ctrl+F => Cari",
+            "4) Ctrl+R => Ganti",
+            "5) Ctrl+S => Simpan",
+            "6) Ctrl+Q => Kembali"
         ]
         
         try:
