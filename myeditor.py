@@ -174,7 +174,7 @@ class TerminalEditor:
         # Isi kotak
         for item in kawalan_list:
             ruang_kosong = lebar_kawalan - len(item) - 1
-            print(f"{' ' * ruang}│ \033[38;5;0m{item}{' ' * ruang_kosong}\033[0m│")
+            print(f"{' ' * ruang}│ \033[38;5;33m{item}{' ' * ruang_kosong}\033[0m│")
         # Garis bawah kotak
         print(f"{' ' * ruang}└{'─' * lebar_kawalan}┘")
         
@@ -236,7 +236,7 @@ class TerminalEditor:
         print(f"{' ' * ruang}┌{'─' * lebar_kawalan}┐")
         for item in kawalan_list:
             ruang_kosong = lebar_kawalan - len(item) - 1
-            print(f"{' ' * ruang}│ \033[38;5;0m{item}{' ' * ruang_kosong}\033[0m│")
+            print(f"{' ' * ruang}│ \033[38;5;33m{item}{' ' * ruang_kosong}\033[0m│")
         print(f"{' ' * ruang}└{'─' * lebar_kawalan}┘")
         
         print(f"{Colors.RED}{'─' * lebar}{Colors.RESET}")
